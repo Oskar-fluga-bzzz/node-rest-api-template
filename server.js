@@ -20,23 +20,8 @@ async function getDBConnnection() {
 }
 
 app.get("/", (req, res) => {
-  res.send(`<h1>Doumentation</h1>
+  res.send(`<h1>Doumentation EXEMPEL</h1>
   <ul><li> GET /users</li></ul>`)
-})
-
-app.get("/users", async (req, res) => {
-  let connection = await getDBConnnection()
-  let sql = `SELECT * ...` //TODO: Skriv SQL här för att hämta alla users
-
-  // Resultatet från .execute() är array med två arrayer
-  // Den första innehåller resultatet från frågan.
-  // Den andra innehåller fields, som är metadata om resultatet.
-  // "let [results] ="" skapar variabeln results och tilldelar den värdet av den första arrayen.
-  let [results] = await connection.execute(sql)
-  console.log(results)
-
-  //res.json() skickar resultat som JSON till klienten
-  res.json(results)
 })
 
 /*
