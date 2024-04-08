@@ -15,11 +15,43 @@ async function getDBConnnection() {
     host: "localhost",
     user: "root",
     password: "",
-    database: "mydb",
+    database: "phpmyadmin",
   })
 }
 
-app.get("/", (req, res) => {
+app = require('express')();
+
+app.get('/users', async function(req, res) {
+  let connection = await getDBConnnection()
+  let sql = `SELECT * ...`   
+  let [results] = await connection.execute(sql)
+
+  //res.json() skickar resultat som JSON till klienten
+  res.json(results)
+});
+
+
+app.post('/users', async function(req, res) {
+  //req.body innehåller det postade datat
+   console.log(req.body)
+ 
+   let connection = await getDBConnnection()
+   let sql = `INSERT INTO users (username, name)
+   VALUES (?, ?)`
+ 
+   let [results] = await connection.execute(sql, [
+     req.body.username,
+     req.body.name,
+   ])
+ 
+   //results innehåller metadata om vad som skapades i databasen
+   console.log(results)
+   res.json(results)
+ });
+ 
+
+
+app.get("/users", async function(req, res) {
   res.send(`<h1>Doumentation EXEMPEL</h1>
   <ul><li> GET /users</li></ul>`)
 })
