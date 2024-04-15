@@ -19,25 +19,23 @@ async function getDBConnnection() {
   })
 }
 
-app = require('express')();
-
-app.get('/users', async function(req, res) {
+// GET request to fetch user data
+app.get('/userdata', async function(req, res) {
   let connection = await getDBConnnection()
-  let sql = `SELECT * ...`   
+  let sql = `SELECT * FROM userdata`   
   let [results] = await connection.execute(sql)
 
   //res.json() skickar resultat som JSON till klienten
   res.json(results)
 });
 
-
-app.post('/users', async function(req, res) {
+// POST request to add user data
+app.post('/userdata', async function(req, res) {
   //req.body innehåller det postade datat
    console.log(req.body)
  
-   let connection = await getDBConnnection()
-   let sql = `INSERT INTO users (username, name)
-   VALUES (?, ?)`
+   let connection = await getDBConnnection();
+   let sql = `INSERT INTO userdata (id, firstname, surname, userid, password) VALUES (?, ?)`
  
    let [results] = await connection.execute(sql, [
      req.body.username,
@@ -50,21 +48,11 @@ app.post('/users', async function(req, res) {
  });
  
 
-
 app.get("/users", async function(req, res) {
-  res.send(`<h1>Doumentation EXEMPEL</h1>
-  <ul><li> GET /users</li></ul>`)
-})
-
-/*
-  app.post() hanterar en http request med POST-metoden.
-*/
-app.post("/users", function (req, res) {
-  // Data som postats till routen ligger i body-attributet på request-objektet.
-  console.log(req.body)
-
-  // POST ska skapa något så här kommer det behövas en INSERT
-  let sql = `INSERT INTO ...`
+  (res.send(`<h1>Doumentation</h1>
+  <ul><li> GET /users</li></ul>
+  <ul><li> GET /userdata</li></ul>`)
+)
 })
 
 const port = 3000
