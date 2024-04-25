@@ -51,12 +51,21 @@ app.post('/userdata', async function(req, res) {
  });
 
  app.get('/userdata/:id', async function(req, res) {
-  //kod här för att hantera anrop…
-  let connection = await getDBConnnection()
+  try {
+    let connection = await getDBConnnection()
+    let sql = "SELECT * FROM userdata WHERE id = ?"
+    let [results] = await connection.execute(sql, [req.params.id])
 
-  let sql = "SELECT * FROM userdata WHERE id = ?"
-  let [results] = await connection.execute(sql, [req.params.id])
-  res.json(results[0]) //returnerar första objektet i arrayen
+    if (results.length > 0) {
+      res.json(results[0])
+    } else {
+      console.log(results.length)
+      res.status(404).json({ error: "User not found" })
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error)
+    res.status(500).json({ error: "Internal server error" })
+  }
 });
 
  
