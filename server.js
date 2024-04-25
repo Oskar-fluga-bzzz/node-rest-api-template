@@ -35,17 +35,31 @@ app.post('/userdata', async function(req, res) {
    console.log(req.body)
  
    let connection = await getDBConnnection();
-   let sql = `INSERT INTO userdata (id, firstname, surname, userid, password) VALUES (?, ?)`
+   let sql = `INSERT INTO userdata (id, firstname, surname, userid, password) VALUES (?, ?, ?, ?, ?)`
  
    let [results] = await connection.execute(sql, [
-     req.body.username,
-     req.body.name,
+     req.body.id,
+     req.body.firstname,
+     req.body.lastname,
+     req.body.userid,
+     req.body.password
    ])
  
    //results innehåller metadata om vad som skapades i databasen
    console.log(results)
    res.json(results)
  });
+
+ app.get('/userdata/:id', async function(req, res) {
+  //kod här för att hantera anrop…
+  let connection = await getDBConnnection()
+
+  let sql = "SELECT * FROM userdata WHERE id = ?"
+  let [results] = await connection.execute(sql, [req.params.id])
+  res.json(results[0]) //returnerar första objektet i arrayen
+});
+
+ 
  
 
 app.get("/users", async function(req, res) {
