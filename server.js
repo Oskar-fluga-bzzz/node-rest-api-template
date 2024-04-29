@@ -2,15 +2,12 @@ const express = require("express")
 const app = express()
 const mysql = require("mysql2/promise")
 
-// parse application/json, för att hantera att man POSTar med JSON
 const bodyParser = require("body-parser")
 
-// Inställningar av servern.
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 async function getDBConnnection() {
-  // Här skapas ett databaskopplings-objekt med inställningar för att ansluta till servern och databasen.
   return await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -19,37 +16,61 @@ async function getDBConnnection() {
   })
 }
 
-// GET request to fetch user data
+// GET
 app.get('/userdata', async function(req, res) {
   let connection = await getDBConnnection()
   let sql = `SELECT * FROM userdata`   
   let [results] = await connection.execute(sql)
 
-  //res.json() skickar resultat som JSON till klienten
   res.json(results)
 });
 
-// POST request to add user data
+// POST
 app.post('/userdata', async function(req, res) {
-  //req.body innehåller det postade datat
-   console.log(req.body)
+  
+  if (isValidUserData(req.body)) {
+    console.log(req.body)
  
-   let connection = await getDBConnnection();
-   let sql = `INSERT INTO userdata (id, firstname, surname, userid, password) VALUES (?, ?, ?, ?, ?)`
- 
-   let [results] = await connection.execute(sql, [
-     req.body.id,
-     req.body.firstname,
-     req.body.lastname,
-     req.body.userid,
-     req.body.password
-   ])
- 
-   //results innehåller metadata om vad som skapades i databasen
-   console.log(results)
-   res.json(results)
+    let connection = await getDBConnnection()
+    let sql = `INSERT INTO userdata (firstname, surname, userid, password) VALUES (?, ?, ?, ?)`
+  
+    let [results] = await connection.execute(sql, [
+      req.body.firstname,
+      req.body.surname,
+      req.body.userid,
+      req.body.password
+    ])
+  
+    console.log(results)
+    res.json(results)
+  } else {
+    res.sendStatus(422)
+  }
+
+  function isValidUserData(body) {
+    return body && body.firstname && body.surname && body.userid && body.password
+  }  
+
  });
 
+ // PUT
+ app.put("/userdata/:id", async function (req, res) {
+  let connection = await getDBConnnection()
+  let sql = `UPDATE userdata
+    SET firstname = ?, surname = ?, userid = ?, password = ?
+    WHERE id = ?`
+
+  let [results] = await connection.execute(sql, [
+    req.body.firstname,
+    req.body.surname,
+    req.body.userid,
+    req.body.password,
+    req.params.id
+  ])
+  console.log(results)
+})
+
+//GET userdata efter id
  app.get('/userdata/:id', async function(req, res) {
   try {
     let connection = await getDBConnnection()
@@ -68,14 +89,19 @@ app.post('/userdata', async function(req, res) {
   }
 });
 
- 
- 
 
-app.get("/users", async function(req, res) {
-  (res.send(`<h1>Doumentation</h1>
-  <ul><li> GET /users</li></ul>
-  <ul><li> GET /userdata</li></ul>`)
-)
+//dokumentation
+app.get("/doc", async function(req, res) {
+  (res.send(`<h1>Documentation</h1>
+  <ul><li> GET /doc</li></ul>
+  <ul><li> GET /userdata</li></ul>
+  <ul><li> GET /userdata/:id</li></ul>
+  <ul><li> POST /userdata -  lägger till användare, accepterar följande JSON format: {
+    "firstname": "Förnamn",
+    "surname": "Efternamn",
+    "userid": "AnvändarID",
+    "password": "EttFintJävlaLösenord"
+  }</li></ul>`))
 })
 
 const port = 3000
