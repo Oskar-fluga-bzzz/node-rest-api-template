@@ -1,6 +1,7 @@
 const express = require("express")
 const app = express()
 const mysql = require("mysql2/promise")
+const bcrypt = require("bcryptjs");
 
 const bodyParser = require("body-parser")
 
@@ -24,6 +25,7 @@ app.get('/userdata', async function(req, res) {
 
   res.json(results)
 });
+
 
 // POST
 app.post('/userdata', async function(req, res) {
@@ -101,7 +103,8 @@ app.get("/doc", async function(req, res) {
     "surname": "Efternamn",
     "userid": "AnvändarID",
     "password": "EttFintJävlaLösenord"
-  }</li></ul>`))
+  }</li></ul>
+  <ul><li> PUT /userdata/:id - ersätter användardata, samma format som POST</li></ul>`))
 })
 
 const port = 3000
