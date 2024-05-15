@@ -1,7 +1,7 @@
 const express = require("express")
 const app = express()
 const mysql = require("mysql2/promise")
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 
 const bodyParser = require("body-parser")
 
@@ -16,6 +16,14 @@ async function getDBConnnection() {
     database: "phpmyadmin",
   })
 }
+
+const register = async (req, res) => {
+  const { password } = req.body;
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  return hashedPassword
+ };
+
 
 // GET
 app.get('/userdata', async function(req, res) {
@@ -35,6 +43,8 @@ app.post('/userdata', async function(req, res) {
  
     let connection = await getDBConnnection()
     let sql = `INSERT INTO userdata (firstname, surname, userid, password) VALUES (?, ?, ?, ?)`
+
+    req.body.password = register(req.body.password)
   
     let [results] = await connection.execute(sql, [
       req.body.firstname,
