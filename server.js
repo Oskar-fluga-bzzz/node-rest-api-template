@@ -17,14 +17,6 @@ async function getDBConnnection() {
   })
 }
 
-const register = async (req, res) => {
-  const { password } = req.body;
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-  return hashedPassword
- };
-
-
 // GET
 app.get('/userdata', async function(req, res) {
   let connection = await getDBConnnection()
@@ -43,14 +35,15 @@ app.post('/userdata', async function(req, res) {
  
     let connection = await getDBConnnection()
     let sql = `INSERT INTO userdata (firstname, surname, userid, password) VALUES (?, ?, ?, ?)`
-
-    req.body.password = register(req.body.password)
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
   
     let [results] = await connection.execute(sql, [
       req.body.firstname,
       req.body.surname,
       req.body.userid,
-      req.body.password
+      hashedPassword
     ])
   
     console.log(results)
@@ -72,11 +65,14 @@ app.post('/userdata', async function(req, res) {
     SET firstname = ?, surname = ?, userid = ?, password = ?
     WHERE id = ?`
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
   let [results] = await connection.execute(sql, [
     req.body.firstname,
     req.body.surname,
     req.body.userid,
-    req.body.password,
+    hashedPassword,
     req.params.id
   ])
   console.log(results)
@@ -101,6 +97,20 @@ app.post('/userdata', async function(req, res) {
   }
 });
 
+//login
+app.post('/login', async function(req, res) {
+  let sql = "SELECT * FROM users WHERE userid = ?"
+  let [results] = await connection.execute(sql, [req.body.userid])
+  res.json(results)
+
+  const isPasswordValid = await bcrypt.compare(req.body.password, hashedPasswordFromDB);
+
+  if (isPasswordValid) {
+  (res.json(req.body.userid, req.body.firstname, req.body.lastname))
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+ });
 
 //dokumentation
 app.get("/doc", async function(req, res) {
