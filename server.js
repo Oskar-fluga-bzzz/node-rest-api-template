@@ -99,18 +99,33 @@ app.post('/userdata', async function(req, res) {
 
 //login
 app.post('/login', async function(req, res) {
-  let sql = "SELECT * FROM users WHERE userid = ?"
-  let [results] = await connection.execute(sql, [req.body.userid])
-  res.json(results)
+  try {
+    let sql = "SELECT * FROM users WHERE userid = ?";
+    let [results] = await connection.execute(sql, [req.body.userid]);
 
-  const isPasswordValid = await bcrypt.compare(req.body.password, hashedPasswordFromDB);
+    if (results.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-  if (isPasswordValid) {
-  (res.json(req.body.userid, req.body.firstname, req.body.lastname))
-  } else {
-    res.status(401).json({ error: 'Invalid credentials' });
+    const user = results[0];
+    const hashedPasswordFromDB = user.password;
+
+    const isPasswordValid = await bcrypt.compare(req.body.password, hashedPasswordFromDB);
+
+    if (isPasswordValid) {
+      res.json({
+        userid: user.userid,
+        firstname: user.firstname,
+        lastname: user.surname
+      });
+    } else {
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
   }
- });
+});
 
 //dokumentation
 app.get("/doc", async function(req, res) {
