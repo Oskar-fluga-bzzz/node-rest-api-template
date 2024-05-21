@@ -97,7 +97,7 @@ app.post('/userdata', async function(req, res) {
   }
 });
 
-//login
+//login (fungerar inte)
 /*app.post('/login', async function(req, res) {
   try {
     let sql = "SELECT * FROM users WHERE userid = ?";
