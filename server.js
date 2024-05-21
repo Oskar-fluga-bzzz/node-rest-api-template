@@ -98,7 +98,7 @@ app.post('/userdata', async function(req, res) {
 });
 
 //login
-app.post('/login', async function(req, res) {
+/*app.post('/login', async function(req, res) {
   try {
     let sql = "SELECT * FROM users WHERE userid = ?";
     let [results] = await connection.execute(sql, [req.body.userid]);
@@ -125,7 +125,7 @@ app.post('/login', async function(req, res) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
+});*/
 
 //dokumentation
 app.get("/doc", async function(req, res) {
