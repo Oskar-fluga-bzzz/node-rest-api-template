@@ -4,6 +4,7 @@ const mysql = require("mysql2/promise")
 const bcrypt = require("bcrypt");
 
 const bodyParser = require("body-parser")
+const jwt = require("jsonwebtoken")
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -20,7 +21,22 @@ async function getDBConnnection() {
 // GET
 app.get('/userdata', async function(req, res) {
   let connection = await getDBConnnection()
-  let sql = `SELECT * FROM userdata`   
+  let sql = `SELECT * FROM userdata`  
+  
+  let authHeader = req.headers['authorization']
+if (authHeader === undefined) {
+  console.log("400: Invalid Token")
+}
+let token = authHeader.slice(7)
+
+let decoded
+try {
+  decoded = jwt.verify(token, 'en hemlig hemlighet som ingen kan gissa')
+} catch (err) {
+  console.log(err)
+  res.status(401).send('401: Invalid auth token')
+}
+
   let [results] = await connection.execute(sql)
 
   res.json(results)
@@ -35,6 +51,20 @@ app.post('/userdata', async function(req, res) {
  
     let connection = await getDBConnnection()
     let sql = `INSERT INTO userdata (firstname, surname, userid, password) VALUES (?, ?, ?, ?)`
+
+    let authHeader = req.headers['authorization']
+    if (authHeader === undefined) {
+      console.log("400: Invalid Token")
+    }
+    let token = authHeader.slice(7)
+    
+    let decoded
+    try {
+      decoded = jwt.verify(token, 'en hemlig hemlighet som ingen kan gissa')
+    } catch (err) {
+      console.log(err)
+      res.status(401).send('401: Invalid auth token')
+    }
     
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -65,6 +95,20 @@ app.post('/userdata', async function(req, res) {
     SET firstname = ?, surname = ?, userid = ?, password = ?
     WHERE id = ?`
 
+    let authHeader = req.headers['authorization']
+    if (authHeader === undefined) {
+      console.log("400: Invalid Token")
+    }
+    let token = authHeader.slice(7)
+    
+    let decoded
+    try {
+      decoded = jwt.verify(token, 'en hemlig hemlighet som ingen kan gissa')
+    } catch (err) {
+      console.log(err)
+      res.status(401).send('401: Invalid auth token')
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
@@ -85,6 +129,20 @@ app.post('/userdata', async function(req, res) {
     let sql = "SELECT * FROM userdata WHERE id = ?"
     let [results] = await connection.execute(sql, [req.params.id])
 
+    let authHeader = req.headers['authorization']
+    if (authHeader === undefined) {
+      console.log("400: Invalid Token")
+    }
+    let token = authHeader.slice(7)
+    
+    let decoded
+    try {
+      decoded = jwt.verify(token, 'en hemlig hemlighet som ingen kan gissa')
+    } catch (err) {
+      console.log(err)
+      res.status(401).send('401: Invalid auth token')
+    }
+
     if (results.length > 0) {
       res.json(results[0])
     } else {
@@ -97,10 +155,11 @@ app.post('/userdata', async function(req, res) {
   }
 });
 
-//login (fungerar inte)
-/*app.post('/login', async function(req, res) {
+//login
+app.post('/login', async function(req, res) {
+  let connection = await getDBConnnection()
   try {
-    let sql = "SELECT * FROM users WHERE userid = ?";
+    let sql = "SELECT * FROM userdata WHERE userid = ?";
     let [results] = await connection.execute(sql, [req.body.userid]);
 
     if (results.length === 0) {
@@ -113,10 +172,13 @@ app.post('/userdata', async function(req, res) {
     const isPasswordValid = await bcrypt.compare(req.body.password, hashedPasswordFromDB);
 
     if (isPasswordValid) {
+      let payload = {
+        sub: req.body.id,
+        name: req.body.firstname + req.body.lastname
+      }
+      let token = jwt.sign(payload, 'en hemlig hemlighet som ingen kan gissa')
       res.json({
-        userid: user.userid,
-        firstname: user.firstname,
-        lastname: user.surname
+        token
       });
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
@@ -125,21 +187,27 @@ app.post('/userdata', async function(req, res) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
-});*/
+});
 
 //dokumentation
 app.get("/doc", async function(req, res) {
   (res.send(`<h1>Documentation</h1>
   <ul><li> GET /doc</li></ul>
-  <ul><li> GET /userdata</li></ul>
-  <ul><li> GET /userdata/:id</li></ul>
-  <ul><li> POST /userdata -  lägger till användare, accepterar följande JSON format: {
+  <ul><li> GET /userdata (kräver token)</li></ul>
+  <ul><li> GET /userdata/:id (kräver token)</li></ul>
+  <ul><li> POST /userdata (kräver token) -  lägger till användare, accepterar följande JSON format: {
     "firstname": "Förnamn",
     "surname": "Efternamn",
-    "userid": "AnvändarID",
+    "userid": "Användarnamn",
     "password": "EttFintJävlaLösenord"
   }</li></ul>
-  <ul><li> PUT /userdata/:id - ersätter användardata, samma format som POST</li></ul>`))
+  <ul><li> PUT /userdata/:id (kräver token) - ersätter användardata, samma format som POST</li></ul>
+  <ul><li> LOGIN /login - logga in, accepterar följande JSON format:
+  {
+    "userid": "Användarnamn",
+    "Password" "Lösenord"
+  }
+  </li></ul>`))
 })
 
 const port = 3000
